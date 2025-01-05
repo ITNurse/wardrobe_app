@@ -6,7 +6,7 @@ import base64
 import io  # Import the io module for BytesIO
 from datetime import datetime
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 # Paths to your files
 metadata_file = r"C:\Users\lisat\OneDrive\008 Inventory\Inventory.xlsx"
