@@ -5,7 +5,7 @@ import os
 import base64
 import io  # Import the io module for BytesIO
 
-__version__ = "1.0.1"
+__version__ = "1.1.1"
 
 # Paths to your files
 metadata_file = r"C:\Users\lisat\OneDrive\008 Inventory\Inventory.xlsx"
@@ -55,33 +55,34 @@ def show_grid():
 
     # Display filtered items in a grid layout
     st.write(f"Showing items for: **{selected_category}**")
-    columns = st.columns(4)  # Create 4 columns for the grid
+    items_per_row = 4
+    rows = [filtered_df.iloc[i:i+items_per_row] for i in range(0, len(filtered_df), items_per_row)]
 
-    for idx, row in filtered_df.iterrows():
-        # Determine the column to use
-        col = columns[idx % 4]
-
-        with col:
-            item_id = row['Item ID']
+    for row in rows:
+        cols = st.columns(items_per_row)  # Create new columns for the row
+        for col, (_, item) in zip(cols, row.iterrows()):
+            item_id = item['Item ID']
             image_path = os.path.join(image_folder, f"{item_id}.jpg")  # Adjust if images are in different format
 
             if os.path.exists(image_path):
                 # Encode the image to base64
                 img_base64 = get_image_base64(image_path, thumbnail_height)
 
-                # Use a form to make the image clickable
-                with st.form(key=f"form_{item_id}"):
-                    # Display the image as part of the form
-                    image_html = f"""
-                        <img src="data:image/jpeg;base64,{img_base64}" style="height:{thumbnail_height}px; border-radius: 5px; border: 1px solid #ccc;" />
-                    """
-                    st.markdown(image_html, unsafe_allow_html=True)
+                # Display the image and a form for selection
+                with col:
+                    with st.form(key=f"form_{item_id}"):
+                        # Display the image
+                        image_html = f"""
+                            <img src="data:image/jpeg;base64,{img_base64}" style="height:{thumbnail_height}px; border-radius: 5px; border: 1px solid #ccc;" />
+                        """
+                        st.markdown(image_html, unsafe_allow_html=True)
 
-                    # Submit button
-                    if st.form_submit_button("Select"):
-                        st.session_state.page = "details"
-                        st.session_state.selected_item = item_id
-                        st.rerun()
+                        # Submit button for selection
+                        if st.form_submit_button("Select"):
+                            st.session_state.page = "details"
+                            st.session_state.selected_item = item_id
+                            st.rerun()
+
 
 def show_details(item_id):
     """
