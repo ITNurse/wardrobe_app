@@ -4,6 +4,7 @@ from PIL import Image
 import os
 import base64
 import io  # Import the io module for BytesIO
+from datetime import datetime
 
 __version__ = "1.1.1"
 
@@ -63,12 +64,15 @@ def show_grid():
         for col, (_, item) in zip(cols, row.iterrows()):
             item_id = item['Item ID']
             image_path = os.path.join(image_folder, f"{item_id}.jpg")  # Adjust if images are in different format
+            brand = item.get('Brand', '')  # Get 'Brand' field, fallback to empty if missing
+            size = item.get('Size', '')    # Get 'Size' field, fallback to empty if missing
+            status = item.get('Item Status', '')    # Get 'Size' field, fallback to empty if missing
 
             if os.path.exists(image_path):
                 # Encode the image to base64
                 img_base64 = get_image_base64(image_path, thumbnail_height)
 
-                # Display the image and a form for selection
+                # Display the image, brand, size, and a form for selection
                 with col:
                     with st.form(key=f"form_{item_id}"):
                         # Display the image
@@ -77,11 +81,19 @@ def show_grid():
                         """
                         st.markdown(image_html, unsafe_allow_html=True)
 
+                        # Display brand and size in 8pt font
+                        st.markdown(f"""
+                            <p style="font-size:10pt; margin:0;">{brand}</p>
+                            <p style="font-size:8pt; margin:0;">Size: {size}</p>
+                            <p style="font-size:8pt; margin:0;">Status: {status}</p>
+                        """, unsafe_allow_html=True)
+
                         # Submit button for selection
-                        if st.form_submit_button("Select"):
+                        if st.form_submit_button("Details"):
                             st.session_state.page = "details"
                             st.session_state.selected_item = item_id
                             st.rerun()
+
 
 
 def show_details(item_id):
@@ -100,7 +112,15 @@ def show_details(item_id):
     # Display all metadata
     st.write("#### Item Details:")
     for col in df.columns:
-        st.write(f"**{col}:** {item[col]}")
+        value = item[col]
+
+        # Check if the column is a datetime column and format it as a date
+        if isinstance(value, pd.Timestamp):
+            formatted_value = value.strftime("%Y-%m-%d")  # Format as YYYY-MM-DD
+        else:
+            formatted_value = value
+
+        st.write(f"**{col}:** {formatted_value}")
 
     # Back button to return to the grid
     if st.button("Back"):
